@@ -1,0 +1,10 @@
+# 项目排除路径
+/im-cilent/target/
+/im-common/target/
+/im-server/target/
+
+.idea
+im.iml
+/im-cilent/im-cilent.iml
+/im-common/im-common.iml
+/im-server/im-server.iml
