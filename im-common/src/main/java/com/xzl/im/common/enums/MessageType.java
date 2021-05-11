@@ -13,6 +13,8 @@ public enum MessageType {
      */
     LOGIN_REQ((byte) 1),
     LOGIN_RESP((byte) 2),
+    SEND_MESSAGE((byte) 3),
+    RECEIVE_MESSAGE((byte) 4),
     ;
     private final byte code;
 

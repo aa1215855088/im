@@ -4,8 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.xzl.im.common.enums.MessageType;
 import com.xzl.im.common.message.ImMessage;
 import com.xzl.im.common.message.LoginMessage;
-import com.xzl.im.common.message.MessageHeader;
 import com.xzl.im.common.util.MessageUtil;
+import com.xzl.im.server.manager.NettyChannelManager;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -13,11 +13,11 @@ import java.util.Objects;
 
 /**
  * @author xzl
- * @date 2021-05-10 22:23
+ * @since 2021-05-10 22:23
  **/
 public class LoginRespHandler extends ChannelHandlerAdapter {
 
-    private final NettyChannelManager manager = new NettyChannelManager();
+    private final NettyChannelManager manager = NettyChannelManager.getInstance();
 
 
     @Override
@@ -32,10 +32,11 @@ public class LoginRespHandler extends ChannelHandlerAdapter {
         if (Objects.nonNull(imMessage) && imMessage.getHeader().getType() == MessageType.LOGIN_REQ.getCode()) {
             LoginMessage body = JSON.parseObject(imMessage.getBody(), LoginMessage.class);
             String userName = body.getUserName();
+            System.out.println("用户:["+userName+"]登陆成功!");
             manager.addUser(userName, ctx.channel());
             ctx.writeAndFlush(MessageUtil.buildLoginSuccessMessage("login success"));
         } else {
-            ctx.fireChannelRead(ctx);
+            ctx.fireChannelRead(msg);
         }
     }
 

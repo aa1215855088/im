@@ -1,9 +1,10 @@
 package com.xzl.im.client;
 
-import com.alibaba.fastjson.JSON;
 import com.xzl.im.client.config.ImClientConfig;
 import com.xzl.im.client.handler.LoginReqHandler;
+import com.xzl.im.client.handler.MessageReceiveHandler;
 import com.xzl.im.common.message.LoginMessage;
+import com.xzl.im.common.message.SendMessage;
 import com.xzl.im.common.util.MessageUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -15,7 +16,6 @@ import io.netty.handler.codec.string.StringEncoder;
 
 import java.net.InetSocketAddress;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author xzl
@@ -26,6 +26,8 @@ public class ImClientStart {
     static ImClientConfig config = new ImClientConfig("127.0.0.1", 8888);
 
     private Channel channel;
+
+    private final LoginState loginState = LoginState.getInstance();
 
     public void connect() throws Exception {
         Bootstrap bootstrap = new Bootstrap();
@@ -40,7 +42,8 @@ public class ImClientStart {
                                 .addLast(new LineBasedFrameDecoder(1024))
                                 .addLast(new StringEncoder())
                                 .addLast(new StringDecoder())
-                                .addLast(new LoginReqHandler());
+                                .addLast(new LoginReqHandler())
+                                .addLast(new MessageReceiveHandler());
                     }
                 });
         ChannelFuture sync = bootstrap
@@ -53,12 +56,28 @@ public class ImClientStart {
                     }
                     // 连接成功
                     channel = future.channel();
-                });
+                }).sync();
         Thread.sleep(100);
         login();
+        sendMessage();
     }
 
-    private void login() {
+    private void sendMessage() throws InterruptedException {
+        System.out.println("开始发送消息!!!");
+        System.out.print("请输入聊天的用户:");
+        Scanner scanner = new Scanner(System.in);
+        String userName = scanner.next();
+        while (true) {
+            System.out.print("发送消息:");
+            String message = scanner.next();
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setMessage(message);
+            sendMessage.setToUser(userName);
+            channel.writeAndFlush(MessageUtil.buildSendMessage(sendMessage));
+        }
+    }
+
+    private void login() throws InterruptedException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("请输入用户名密码！");
         System.out.print("用户名:");
@@ -69,30 +88,17 @@ public class ImClientStart {
         loginMessage.setUserName(userName);
         loginMessage.setPassword(password);
         channel.writeAndFlush(MessageUtil.buildLoginMessage(loginMessage)).addListener((ChannelFutureListener) future -> {
-            // 连接失败
+            //登陆失败
             if (!future.isSuccess()) {
                 login();
             }
-        });
-    }
-
-    public static void main(String[] args) {
-        ImClientStart imClientStart = new ImClientStart();
-        try {
-            imClientStart.connect();
-        } catch (Exception e) {
-            System.out.println("启动失败！开始重新链接");
-            config.getRETRY_EXECUTOR().execute(() -> {
-                try {
-                    TimeUnit.SECONDS.sleep(5);
-                    imClientStart.connect();
-                } catch (Exception exception) {
-                    exception.printStackTrace();
-                }
-
-            });
+        }).sync();
+        loginState.getLatch().await();
+        if (loginState.getState() != 1) {
+            System.out.println("登陆失败重新登陆");
+            login();
         }
-
     }
+
 
 }

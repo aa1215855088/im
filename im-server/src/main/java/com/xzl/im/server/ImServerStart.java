@@ -2,6 +2,7 @@ package com.xzl.im.server;
 
 import com.xzl.im.server.config.ImServerConfig;
 import com.xzl.im.server.handler.LoginRespHandler;
+import com.xzl.im.server.handler.MessageHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -35,7 +36,8 @@ public class ImServerStart {
                                 .addLast(new LineBasedFrameDecoder(1024))
                                 .addLast(new StringEncoder())
                                 .addLast(new StringDecoder())
-                                .addLast(new LoginRespHandler());
+                                .addLast(new LoginRespHandler())
+                                .addLast(new MessageHandler());
                     }
                 });
         ChannelFuture f = null;

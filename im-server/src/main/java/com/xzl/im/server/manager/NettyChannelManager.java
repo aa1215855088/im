@@ -1,4 +1,4 @@
-package com.xzl.im.server.handler;
+package com.xzl.im.server.manager;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  **/
 public class NettyChannelManager {
 
+    private static final NettyChannelManager INSTANCE = new NettyChannelManager();
     /**
      * channel映射
      */
@@ -34,5 +35,14 @@ public class NettyChannelManager {
             userMap.put(userId, channel);
         }
     }
+
+    public Channel getUser(String userId) {
+        return userMap.get(userId);
+    }
+
+    public static NettyChannelManager getInstance() {
+        return INSTANCE;
+    }
+
 
 }
